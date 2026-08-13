@@ -41,8 +41,6 @@ var store = {
 };
 
 /* ---------- Workout data model ---------- */
-/* tier: essential | recommended | optional
-   type: used to compute rep/set prescription by phase */
 var WORKOUTS = {
   "Lower A": {
     hint: "Glutes & hamstrings",
@@ -147,6 +145,9 @@ function tiersAllowedForMode(mode) {
   return ["essential", "recommended", "optional"];
 }
 
+var CYCLE_LENGTH = 28;
+var PERIOD_DURATION = 3;
+
 /* ---------- State ---------- */
 var state = {
   requiredIndex: parseInt(store.get('requiredIndex') || '0', 10),
@@ -164,16 +165,14 @@ function currentPhase() {
 function getCycleLog() {
   try { return JSON.parse(store.get('cycleLog') || '[]'); } catch (e) { return []; }
 }
-function daysBetween(a, b) {
-  return Math.round((b - a) / 86400000);
-}
+function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
 function isMenstruatingToday() {
   var log = getCycleLog();
   if (!log.length) return false;
   var last = new Date(log[log.length - 1].date + 'T00:00:00');
   var today = new Date(new Date().toDateString());
   var d = daysBetween(last, today);
-  return d >= 0 && d < 3; // 3-day duration
+  return d >= 0 && d < PERIOD_DURATION;
 }
 function currentCycleDay() {
   var log = getCycleLog();
@@ -186,8 +185,7 @@ function nextPredictedPeriod() {
   var log = getCycleLog();
   if (!log.length) return null;
   var last = new Date(log[log.length - 1].date + 'T00:00:00');
-  var next = new Date(last.getTime() + 28 * 86400000);
-  return next;
+  return new Date(last.getTime() + CYCLE_LENGTH * 86400000);
 }
 function startPeriod() {
   var log = getCycleLog();
@@ -201,51 +199,131 @@ function startPeriod() {
   renderCycle();
   renderHeader();
   renderWorkout();
+  renderRecommendation();
 }
 function openCycleHistory() {
   var log = getCycleLog();
   var el = document.getElementById('history');
   if (!el) return;
-  if (!log.length) { el.innerHTML = '<p style="color:var(--sub);font-size:.85rem">No cycle entries yet.</p>'; return; }
-  var rows = log.slice(-6).reverse().map(function (e) {
-    return '<div class="exercise"><b>' + e.date + '</b><div class="ex-note">Logged period start</div></div>';
-  }).join('');
-  el.innerHTML = '<h3 style="margin-top:18px">Recent cycle entries</h3>' + rows;
-  window.location.hash = '#progress';
+  if (!log.length) { el.innerHTML = '<p style="color:var(--sub);font-size:.85rem">No cycle entries yet.</p>'; }
+  else {
+    var rows = log.slice(-6).reverse().map(function (e) {
+      return '<div class="exercise"><b>' + e.date + '</b><div class="ex-note">Logged period start</div></div>';
+    }).join('');
+    el.innerHTML = '<h3 style="margin-top:18px">Recent cycle entries</h3>' + rows;
+  }
+  try { window.location.hash = '#progress'; } catch (e) {}
 }
+
+/* Render the Apple-Health-style ring + dot timeline */
 function renderCycle() {
   var headline = document.getElementById('cycleHeadline');
   var sub = document.getElementById('cycleSub');
+  var dayNum = document.getElementById('cycleDayNum');
+  var dayLabel = document.getElementById('cycleDayLabel');
+  var ringFg = document.getElementById('cycleRingFg');
+  var dotsWrap = document.getElementById('cycleDots');
+  if (!headline || !sub || !dayNum || !ringFg) return;
+
   var day = currentCycleDay();
-  if (!headline || !sub) return;
+  var circumference = 2 * Math.PI * 44; // r=44
+
   if (day === null) {
-    headline.textContent = 'Cycle Day —';
+    dayNum.textContent = '—';
+    if (dayLabel) dayLabel.textContent = 'Day';
+    headline.textContent = 'No entries yet';
     sub.textContent = 'Log your period start to begin tracking.';
+    ringFg.setAttribute('stroke-dasharray', String(circumference));
+    ringFg.setAttribute('stroke-dashoffset', String(circumference));
+    if (dotsWrap) dotsWrap.innerHTML = '';
     return;
   }
+
+  var clampedDay = ((day - 1) % CYCLE_LENGTH) + 1;
   var menstruating = isMenstruatingToday();
-  headline.textContent = 'Cycle Day ' + day + (menstruating ? ' · Menstruation' : '');
+  var progress = clampedDay / CYCLE_LENGTH;
+  var offset = circumference * (1 - progress);
+
+  dayNum.textContent = String(clampedDay);
+  if (dayLabel) dayLabel.textContent = 'of ' + CYCLE_LENGTH;
+  ringFg.setAttribute('stroke-dasharray', String(circumference));
+  ringFg.setAttribute('stroke-dashoffset', String(offset));
+
+  headline.textContent = menstruating ? 'Menstruation · Day ' + clampedDay : 'Day ' + clampedDay + ' of cycle';
   var next = nextPredictedPeriod();
-  var nextStr = next ? next.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—';
-  sub.textContent = (menstruating ? 'Easy training recommended today. ' : '') + 'Estimated next period: ' + nextStr + '.';
+  var daysUntil = next ? daysBetween(new Date(new Date().toDateString()), next) : null;
+  if (menstruating) {
+    sub.textContent = 'Easy training recommended today.';
+  } else if (daysUntil !== null && daysUntil >= 0) {
+    sub.textContent = daysUntil === 0 ? 'Period likely today.' : ('Period likely in ' + daysUntil + ' day' + (daysUntil === 1 ? '' : 's') + '.');
+  } else {
+    sub.textContent = 'Tracking in progress.';
+  }
+
+  if (dotsWrap) {
+    var html = '';
+    for (var i = 1; i <= CYCLE_LENGTH; i++) {
+      var isPeriod = i <= PERIOD_DURATION;
+      var isToday = i === clampedDay;
+      html += '<div class="cycle-dot' + (isPeriod ? ' period' : '') + (isToday ? ' today' : '') + '"></div>';
+    }
+    dotsWrap.innerHTML = html;
+  }
 }
 
-/* ---------- Readiness engine ---------- */
+/* ---------- Readiness engine (segmented controls) ---------- */
+function initSegmentedControls() {
+  var groups = document.querySelectorAll('.segmented');
+  groups.forEach(function (group) {
+    var buttons = group.querySelectorAll('.seg-btn');
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        buttons.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        group.setAttribute('data-value', btn.getAttribute('data-val'));
+        persistReadinessFromDOM();
+        renderRecommendation();
+      });
+    });
+  });
+}
+function readSegmentedValue(fieldName) {
+  var group = document.querySelector('.segmented[data-field="' + fieldName + '"]');
+  return group ? group.getAttribute('data-value') : null;
+}
+function setSegmentedValue(fieldName, value) {
+  var group = document.querySelector('.segmented[data-field="' + fieldName + '"]');
+  if (!group) return;
+  group.setAttribute('data-value', value);
+  var buttons = group.querySelectorAll('.seg-btn');
+  buttons.forEach(function (b) {
+    if (b.getAttribute('data-val') === String(value)) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+}
+function persistReadinessFromDOM() {
+  var r = {
+    date: new Date().toISOString().slice(0, 10),
+    energy: readSegmentedValue('rEnergy'),
+    cramps: readSegmentedValue('rCramps'),
+    soreness: readSegmentedValue('rSoreness'),
+    sleep: readSegmentedValue('rSleep'),
+    motivation: readSegmentedValue('rMotivation')
+  };
+  store.set('readinessToday', JSON.stringify(r));
+  return r;
+}
 function getReadiness() {
   try { return JSON.parse(store.get('readinessToday') || '{}'); } catch (e) { return {}; }
 }
-function saveReadiness() {
-  var r = {
-    date: new Date().toISOString().slice(0, 10),
-    energy: document.getElementById('rEnergy').value,
-    cramps: document.getElementById('rCramps').value,
-    soreness: document.getElementById('rSoreness').value,
-    sleep: document.getElementById('rSleep').value,
-    motivation: document.getElementById('rMotivation').value
-  };
-  store.set('readinessToday', JSON.stringify(r));
-  renderRecommendation();
-  var s = document.getElementById('saveStatus'); if (s) s.textContent = 'Readiness updated — recommendation refreshed.';
+function restoreReadinessToDOM() {
+  var r = getReadiness();
+  if (!r || !r.date) return;
+  if (r.energy) setSegmentedValue('rEnergy', r.energy);
+  if (r.cramps) setSegmentedValue('rCramps', r.cramps);
+  if (r.soreness) setSegmentedValue('rSoreness', r.soreness);
+  if (r.sleep) setSegmentedValue('rSleep', r.sleep);
+  if (r.motivation) setSegmentedValue('rMotivation', r.motivation);
 }
 function computeRecommendation() {
   var r = getReadiness();
@@ -271,8 +349,10 @@ function renderRecommendation() {
   var out = document.getElementById('recommendOut');
   if (!out) return;
   var rec = computeRecommendation();
-  out.innerHTML = '<div class="recommend-pill ' + rec.level + '">' + rec.label + ' — ' + rec.text + '</div>';
+  out.innerHTML = '<div class="recommend-pill ' + rec.level + '"><span class="dot"></span>' + rec.label + ' — ' + rec.text + '</div>';
 }
+/* kept for backward-compatible calls elsewhere */
+function saveReadiness() { persistReadinessFromDOM(); renderRecommendation(); }
 
 /* ---------- Rendering: workout picker & mode tabs ---------- */
 function renderWorkoutPicker() {
@@ -333,7 +413,7 @@ function renderWorkout() {
   var allowedTiers = tiersAllowedForMode(state.mode);
   var visible = data.exercises.filter(function (e) { return allowedTiers.indexOf(e.tier) !== -1; });
 
-  var doneCount = visible.filter(function (e, vi) {
+  var doneCount = visible.filter(function (e) {
     var realIdx = data.exercises.indexOf(e);
     return store.get(exKey(workoutName, realIdx, 'done')) === '1';
   }).length;
@@ -392,7 +472,6 @@ function completeWorkout() {
   visibleIndices(workoutName).forEach(function (i) { store.set(exKey(workoutName, i, 'done'), '1'); });
   renderWorkout();
 
-  // Advance rotation only for required workouts, only counted once per "session"
   if (REQUIRED_ORDER.indexOf(workoutName) !== -1 && workoutName === REQUIRED_ORDER[state.requiredIndex]) {
     state.requiredIndex = (state.requiredIndex + 1) % REQUIRED_ORDER.length;
     store.set('requiredIndex', String(state.requiredIndex));
@@ -400,7 +479,6 @@ function completeWorkout() {
       state.rotationCount = state.rotationCount + 1;
       store.set('rotationCount', String(state.rotationCount));
     }
-    // auto-advance selection to the next required workout
     state.selectedWorkout = REQUIRED_ORDER[state.requiredIndex];
     store.set('selectedWorkout', state.selectedWorkout);
   }
@@ -539,7 +617,7 @@ function restoreData(file) {
   reader.onload = function () {
     try {
       var data = JSON.parse(reader.result);
-      var storage = data.storage || data; // tolerate raw storage dumps
+      var storage = data.storage || data;
       Object.keys(storage).forEach(function (k) { store.set(k, storage[k]); });
       var s = document.getElementById('saveStatus'); if (s) s.textContent = 'Backup restored. Reloading…';
       setTimeout(function () { location.reload(); }, 900);
@@ -580,6 +658,8 @@ function registerOfflineApp() {
 }
 function safeInit() {
   try { var d = document.getElementById('pDate'); if (d) { try { d.valueAsDate = new Date(); } catch (e) { d.value = new Date().toISOString().slice(0, 10); } } } catch (e) {}
+  try { initSegmentedControls(); } catch (e) { console.error('initSegmentedControls failed', e); }
+  try { restoreReadinessToDOM(); } catch (e) { console.error('restoreReadinessToDOM failed', e); }
   try { renderAll(); } catch (e) { console.error('renderAll failed', e); }
   try { renderHistory(); } catch (e) { console.error('renderHistory failed', e); }
   try { updateTimer(); } catch (e) { console.error('updateTimer failed', e); }
