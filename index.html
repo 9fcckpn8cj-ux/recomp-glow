@@ -19,7 +19,6 @@
   --pink:#c2185b; --pink2:#ff5b8b; --pinkSoft:#ffe4ec; --rose:#ffeef2; --lav:#f1e8ff;
   --green:#146b3d; --amber:#7a5209; --red:#d81b3f; --shadow:0 14px 34px rgba(194,24,91,.12); --radius:26px;
 }
-/* Force light appearance regardless of system dark-mode setting */
 html{color-scheme:light}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
@@ -202,8 +201,8 @@ button{cursor:pointer;touch-action:manipulation;color:var(--text)}
   </div>
   <div class="cycle-dots" id="cycleDots"></div>
   <div class="cycle-actions">
-    <button class="cycle-btn solid" onclick="startPeriod()">Period started today</button>
-    <button class="cycle-btn ghost" onclick="openCycleHistory()">History</button>
+    <button type="button" class="cycle-btn solid" id="btnStartPeriod">Period started today</button>
+    <button type="button" class="cycle-btn ghost" id="btnCycleHistory">History</button>
   </div>
 </div>
 
@@ -213,40 +212,40 @@ button{cursor:pointer;touch-action:manipulation;color:var(--text)}
   <div class="segmented-group">
     <span class="segmented-label">Energy</span>
     <div class="segmented" data-field="rEnergy" data-value="4">
-      <button class="seg-btn" data-val="1">1</button><button class="seg-btn" data-val="2">2</button>
-      <button class="seg-btn" data-val="3">3</button><button class="seg-btn active" data-val="4">4</button>
-      <button class="seg-btn" data-val="5">5</button>
+      <button type="button" class="seg-btn" data-val="1">1</button><button type="button" class="seg-btn" data-val="2">2</button>
+      <button type="button" class="seg-btn" data-val="3">3</button><button type="button" class="seg-btn active" data-val="4">4</button>
+      <button type="button" class="seg-btn" data-val="5">5</button>
     </div>
   </div>
   <div class="segmented-group">
     <span class="segmented-label">Cramps</span>
     <div class="segmented" data-field="rCramps" data-value="none">
-      <button class="seg-btn active" data-val="none">None</button><button class="seg-btn" data-val="mild">Mild</button>
-      <button class="seg-btn" data-val="moderate">Moderate</button><button class="seg-btn" data-val="severe">Severe</button>
+      <button type="button" class="seg-btn active" data-val="none">None</button><button type="button" class="seg-btn" data-val="mild">Mild</button>
+      <button type="button" class="seg-btn" data-val="moderate">Moderate</button><button type="button" class="seg-btn" data-val="severe">Severe</button>
     </div>
   </div>
   <div class="segmented-group">
     <span class="segmented-label">Soreness</span>
     <div class="segmented" data-field="rSoreness" data-value="2">
-      <button class="seg-btn" data-val="1">1</button><button class="seg-btn active" data-val="2">2</button>
-      <button class="seg-btn" data-val="3">3</button><button class="seg-btn" data-val="4">4</button>
-      <button class="seg-btn" data-val="5">5</button>
+      <button type="button" class="seg-btn" data-val="1">1</button><button type="button" class="seg-btn active" data-val="2">2</button>
+      <button type="button" class="seg-btn" data-val="3">3</button><button type="button" class="seg-btn" data-val="4">4</button>
+      <button type="button" class="seg-btn" data-val="5">5</button>
     </div>
   </div>
   <div class="segmented-group">
     <span class="segmented-label">Sleep quality</span>
     <div class="segmented" data-field="rSleep" data-value="4">
-      <button class="seg-btn" data-val="1">1</button><button class="seg-btn" data-val="2">2</button>
-      <button class="seg-btn" data-val="3">3</button><button class="seg-btn active" data-val="4">4</button>
-      <button class="seg-btn" data-val="5">5</button>
+      <button type="button" class="seg-btn" data-val="1">1</button><button type="button" class="seg-btn" data-val="2">2</button>
+      <button type="button" class="seg-btn" data-val="3">3</button><button type="button" class="seg-btn active" data-val="4">4</button>
+      <button type="button" class="seg-btn" data-val="5">5</button>
     </div>
   </div>
   <div class="segmented-group">
     <span class="segmented-label">Motivation</span>
     <div class="segmented" data-field="rMotivation" data-value="4">
-      <button class="seg-btn" data-val="1">1</button><button class="seg-btn" data-val="2">2</button>
-      <button class="seg-btn" data-val="3">3</button><button class="seg-btn active" data-val="4">4</button>
-      <button class="seg-btn" data-val="5">5</button>
+      <button type="button" class="seg-btn" data-val="1">1</button><button type="button" class="seg-btn" data-val="2">2</button>
+      <button type="button" class="seg-btn" data-val="3">3</button><button type="button" class="seg-btn active" data-val="4">4</button>
+      <button type="button" class="seg-btn" data-val="5">5</button>
     </div>
   </div>
 
@@ -268,8 +267,8 @@ button{cursor:pointer;touch-action:manipulation;color:var(--text)}
 <div class="glass panel timer">
   <div><div class="eyebrow">Rest timer</div><div class="timer-display" id="timerDisplay">01:30</div></div>
   <div>
-    <div class="quick"><button onclick="setTimer(45)">0:45</button><button onclick="setTimer(60)">1:00</button><button onclick="setTimer(90)">1:30</button><button onclick="setTimer(120)">2:00</button></div>
-    <div class="actions"><button class="primary" id="timerToggle" onclick="toggleTimer()">Start</button><button class="secondary" onclick="resetTimer()">Reset</button></div>
+    <div class="quick"><button type="button" data-secs="45">0:45</button><button type="button" data-secs="60">1:00</button><button type="button" data-secs="90">1:30</button><button type="button" data-secs="120">2:00</button></div>
+    <div class="actions"><button type="button" class="primary" id="timerToggle">Start</button><button type="button" class="secondary" id="timerReset">Reset</button></div>
   </div>
 </div>
 </section>
@@ -309,7 +308,7 @@ button{cursor:pointer;touch-action:manipulation;color:var(--text)}
 <div class="macro-box"><b id="mCarb">245g</b><span>Carbohydrates</span></div>
 </div>
 <p style="margin-top:12px;color:var(--sub);font-size:.85rem">Ranges: 1,850–2,050 kcal · Protein 95–110g · Fat 55–65g · Carbohydrates 220–270g. Adjust only after two consecutive weeks of trend data, not a single day.</p>
-<div class="actions"><button class="secondary" onclick="toggleMacroEdit()">Adjust targets</button></div>
+<div class="actions"><button type="button" class="secondary" id="btnToggleMacro">Adjust targets</button></div>
 <div id="macroEdit" style="display:none;margin-top:10px">
   <div class="form-grid">
     <div class="field"><label>Calories</label><input type="number" id="eCal" value="1950"></div>
@@ -317,7 +316,7 @@ button{cursor:pointer;touch-action:manipulation;color:var(--text)}
     <div class="field"><label>Fat (g)</label><input type="number" id="eFat" value="60"></div>
     <div class="field"><label>Carbs (g)</label><input type="number" id="eCarb" value="245"></div>
   </div>
-  <div class="actions"><button class="primary" onclick="saveMacros()">Save targets</button></div>
+  <div class="actions"><button type="button" class="primary" id="btnSaveMacros">Save targets</button></div>
 </div>
 </div>
 <div class="glass panel mini">
@@ -356,14 +355,14 @@ button{cursor:pointer;touch-action:manipulation;color:var(--text)}
 <div class="field"><label>Training quality (1–5)</label><select id="pTraining"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
 <div class="field span4"><label>Notes</label><textarea id="pNotes" placeholder="Strength, symptoms, mood, anything worth remembering..."></textarea></div>
 </div>
-<div class="actions"><button class="primary" onclick="saveCheckin()">Save check-in</button><button class="secondary" onclick="exportData()">Export backup</button><button class="danger" onclick="clearData()">Reset all</button></div>
+<div class="actions"><button type="button" class="primary" id="btnSaveCheckin">Save check-in</button><button type="button" class="secondary" id="btnExport">Export backup</button><button type="button" class="danger" id="btnClearData">Reset all</button></div>
 <div class="status" id="saveStatus"></div>
 <div id="history"></div>
 </div>
 <div class="glass panel">
 <h3 style="margin:0 0 6px">Restore from backup</h3>
 <p style="margin:0 0 10px;color:var(--sub);font-size:.85rem">Use this after reinstalling the app or switching phones.</p>
-<div class="filepick"><input type="file" id="restoreFile" accept="application/json" onchange="restoreData(this.files[0])"></div>
+<div class="filepick"><input type="file" id="restoreFile" accept="application/json"></div>
 </div>
 </section>
 

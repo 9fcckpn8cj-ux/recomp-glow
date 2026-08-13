@@ -131,6 +131,7 @@ var WORKOUTS = {
 };
 
 var REQUIRED_ORDER = ["Lower A", "Upper", "Lower B"];
+var ALL_WORKOUT_NAMES = REQUIRED_ORDER.concat(["Optional"]);
 var PHASES = [
   { name: "Adaptation", tag: "Easy", sets: { main: 2, secondary: 2, lower: 2, isolation3: 2, isolation2: 2, rear: 2, abs: 2 }, reps: "10–15", rir: "3–4" },
   { name: "Progression", tag: "Building", sets: { main: 3, secondary: 3, lower: 3, isolation3: 3, isolation2: 2, rear: 3, abs: 3 }, reps: "8–12", rir: "2–3" },
@@ -351,36 +352,76 @@ function renderRecommendation() {
   var rec = computeRecommendation();
   out.innerHTML = '<div class="recommend-pill ' + rec.level + '"><span class="dot"></span>' + rec.label + ' — ' + rec.text + '</div>';
 }
-/* kept for backward-compatible calls elsewhere */
-function saveReadiness() { persistReadinessFromDOM(); renderRecommendation(); }
 
-/* ---------- Rendering: workout picker & mode tabs ---------- */
-function renderWorkoutPicker() {
+/* =========================================================
+   Stable picker rendering
+   These controls are built ONCE and then only updated
+   (class/text changes) on every subsequent render. This
+   avoids destroying and recreating button elements every
+   time the user taps something — which on iOS Safari can
+   make a button feel unresponsive if it gets replaced out
+   from under an in-progress tap.
+   ========================================================= */
+var workoutChipEls = {};   // name -> button element
+var modeTabEls = {};       // mode -> button element
+
+function buildWorkoutPickerOnce() {
   var wrap = document.getElementById('workoutPicker');
-  if (!wrap) return;
-  wrap.innerHTML = '';
-  var order = REQUIRED_ORDER.concat(['Optional']);
-  order.forEach(function (name) {
+  if (!wrap || wrap.dataset.built === '1') return;
+  ALL_WORKOUT_NAMES.forEach(function (name) {
     var b = document.createElement('button');
-    b.className = 'wk-chip' + (name === state.selectedWorkout ? ' active' : '');
+    b.type = 'button';
+    b.className = 'wk-chip';
+    b.textContent = name;
+    b.addEventListener('click', function () {
+      state.selectedWorkout = name;
+      store.set('selectedWorkout', name);
+      updateWorkoutPickerUI();
+      renderHeader();
+      renderWorkout();
+    });
+    wrap.appendChild(b);
+    workoutChipEls[name] = b;
+  });
+  wrap.dataset.built = '1';
+}
+function updateWorkoutPickerUI() {
+  ALL_WORKOUT_NAMES.forEach(function (name) {
+    var b = workoutChipEls[name];
+    if (!b) return;
     var isNextRequired = (name === REQUIRED_ORDER[state.requiredIndex]);
     b.textContent = name + (isNextRequired ? ' •' : '');
-    b.onclick = function () { state.selectedWorkout = name; store.set('selectedWorkout', name); renderAll(); };
-    wrap.appendChild(b);
+    if (name === state.selectedWorkout) b.classList.add('active'); else b.classList.remove('active');
   });
 }
-function renderModeTabs() {
+
+function buildModeTabsOnce() {
   var wrap = document.getElementById('modeTabs');
-  if (!wrap) return;
-  wrap.innerHTML = '';
+  if (!wrap || wrap.dataset.built === '1') return;
   DURATION_MODES.forEach(function (m) {
     var b = document.createElement('button');
-    b.className = 'mode-tab' + (m === state.mode ? ' active' : '');
+    b.type = 'button';
+    b.className = 'mode-tab';
     b.textContent = m;
-    b.onclick = function () { state.mode = m; store.set('mode', m); renderWorkout(); };
+    b.addEventListener('click', function () {
+      state.mode = m;
+      store.set('mode', m);
+      updateModeTabsUI();
+      renderWorkout();
+    });
     wrap.appendChild(b);
+    modeTabEls[m] = b;
+  });
+  wrap.dataset.built = '1';
+}
+function updateModeTabsUI() {
+  DURATION_MODES.forEach(function (m) {
+    var b = modeTabEls[m];
+    if (!b) return;
+    if (m === state.mode) b.classList.add('active'); else b.classList.remove('active');
   });
 }
+
 function renderHeader() {
   var phase = currentPhase();
   var menstruating = isMenstruatingToday();
@@ -450,8 +491,13 @@ function renderWorkout() {
       '</div>' +
     '</div>';
   });
-  html += '<div class="actions"><button class="primary" onclick="completeWorkout()">Complete workout</button><button class="secondary" onclick="uncheckWorkout()">Clear checks</button></div>';
+  html += '<div class="actions"><button type="button" class="primary" id="btnCompleteWorkout">Complete workout</button><button type="button" class="secondary" id="btnClearChecks">Clear checks</button></div>';
   panel.innerHTML = html;
+
+  var completeBtn = document.getElementById('btnCompleteWorkout');
+  var clearBtn = document.getElementById('btnClearChecks');
+  if (completeBtn) completeBtn.addEventListener('click', completeWorkout);
+  if (clearBtn) clearBtn.addEventListener('click', uncheckWorkout);
 }
 
 function saveExercise(workout, idx, key, value) {
@@ -470,7 +516,6 @@ function visibleIndices(workoutName) {
 function completeWorkout() {
   var workoutName = state.selectedWorkout;
   visibleIndices(workoutName).forEach(function (i) { store.set(exKey(workoutName, i, 'done'), '1'); });
-  renderWorkout();
 
   if (REQUIRED_ORDER.indexOf(workoutName) !== -1 && workoutName === REQUIRED_ORDER[state.requiredIndex]) {
     state.requiredIndex = (state.requiredIndex + 1) % REQUIRED_ORDER.length;
@@ -483,7 +528,9 @@ function completeWorkout() {
     store.set('selectedWorkout', state.selectedWorkout);
   }
   var s = document.getElementById('saveStatus'); if (s) s.textContent = 'Workout completed and stored on this device.';
-  renderAll();
+  updateWorkoutPickerUI();
+  renderHeader();
+  renderWorkout();
 }
 function uncheckWorkout() {
   var workoutName = state.selectedWorkout;
@@ -633,18 +680,42 @@ function clearData() {
   if (ok) {
     store.clear();
     state.requiredIndex = 0; state.rotationCount = 0; state.selectedWorkout = REQUIRED_ORDER[0]; state.mode = 'Standard';
-    try { renderAll(); } catch (e) {}
+    try { updateWorkoutPickerUI(); updateModeTabsUI(); renderAll(); } catch (e) {}
     try { renderHistory(); } catch (e) {}
     var s = document.getElementById('saveStatus'); if (s) s.textContent = 'All local data was cleared.';
   }
+}
+
+/* ---------- Wire up static (non-regenerated) buttons once ---------- */
+function wireStaticControls() {
+  var byId = document.getElementById.bind(document);
+
+  var startBtn = byId('btnStartPeriod'); if (startBtn) startBtn.addEventListener('click', startPeriod);
+  var historyBtn = byId('btnCycleHistory'); if (historyBtn) historyBtn.addEventListener('click', openCycleHistory);
+
+  var timerToggleBtn = byId('timerToggle'); if (timerToggleBtn) timerToggleBtn.addEventListener('click', toggleTimer);
+  var timerResetBtn = byId('timerReset'); if (timerResetBtn) timerResetBtn.addEventListener('click', resetTimer);
+  document.querySelectorAll('[data-secs]').forEach(function (b) {
+    b.addEventListener('click', function () { setTimer(parseInt(b.getAttribute('data-secs'), 10)); });
+  });
+
+  var toggleMacroBtn = byId('btnToggleMacro'); if (toggleMacroBtn) toggleMacroBtn.addEventListener('click', toggleMacroEdit);
+  var saveMacroBtn = byId('btnSaveMacros'); if (saveMacroBtn) saveMacroBtn.addEventListener('click', saveMacros);
+
+  var saveCheckinBtn = byId('btnSaveCheckin'); if (saveCheckinBtn) saveCheckinBtn.addEventListener('click', saveCheckin);
+  var exportBtn = byId('btnExport'); if (exportBtn) exportBtn.addEventListener('click', exportData);
+  var clearBtn = byId('btnClearData'); if (clearBtn) clearBtn.addEventListener('click', clearData);
+
+  var restoreInput = byId('restoreFile');
+  if (restoreInput) restoreInput.addEventListener('change', function () { restoreData(this.files[0]); });
 }
 
 /* ---------- Init ---------- */
 function renderAll() {
   renderCycle();
   renderRecommendation();
-  renderWorkoutPicker();
-  renderModeTabs();
+  updateWorkoutPickerUI();
+  updateModeTabsUI();
   renderHeader();
   renderWorkout();
   renderMacros();
@@ -658,8 +729,11 @@ function registerOfflineApp() {
 }
 function safeInit() {
   try { var d = document.getElementById('pDate'); if (d) { try { d.valueAsDate = new Date(); } catch (e) { d.value = new Date().toISOString().slice(0, 10); } } } catch (e) {}
+  try { buildWorkoutPickerOnce(); } catch (e) { console.error('buildWorkoutPickerOnce failed', e); }
+  try { buildModeTabsOnce(); } catch (e) { console.error('buildModeTabsOnce failed', e); }
   try { initSegmentedControls(); } catch (e) { console.error('initSegmentedControls failed', e); }
   try { restoreReadinessToDOM(); } catch (e) { console.error('restoreReadinessToDOM failed', e); }
+  try { wireStaticControls(); } catch (e) { console.error('wireStaticControls failed', e); }
   try { renderAll(); } catch (e) { console.error('renderAll failed', e); }
   try { renderHistory(); } catch (e) { console.error('renderHistory failed', e); }
   try { updateTimer(); } catch (e) { console.error('updateTimer failed', e); }
