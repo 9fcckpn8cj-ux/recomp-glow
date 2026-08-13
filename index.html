@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff5f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="A flexible, cycle-aware 8-week body recomposition training companion.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Recomp Glow | Training Companion</title>
+<style>
+:root{
+  --bg:#fbf7f8; --card:rgba(255,255,255,.9); --text:#241b1f; --sub:#8c7a80; --line:#f0dde3;
+  --pink:#ff5b8b; --pink2:#ff8fab; --pinkSoft:#ffe4ec; --rose:#ffeef2; --lav:#f1e8ff;
+  --green:#2fbf71; --amber:#ffb000; --red:#ff3b57; --shadow:0 14px 34px rgba(255,91,139,.10); --radius:26px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 85% -5%, #ffe1ea 0, transparent 32%),radial-gradient(circle at -10% 20%, #f1e8ff 0, transparent 30%),var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:104px}
+button,input,select,textarea{font:inherit;font-size:16px}
+button{cursor:pointer;touch-action:manipulation}
+.wrap{width:min(980px,100%);margin:auto;padding:0 18px}
+.hero{padding:calc(28px + env(safe-area-inset-top)) 0 16px}
+.eyebrow{font-weight:750;color:var(--pink);font-size:.8rem;text-transform:uppercase;letter-spacing:.09em}
+.hero h1{font-size:clamp(2.15rem,7.5vw,3.9rem);line-height:1;letter-spacing:-.05em;margin:9px 0 12px;background:linear-gradient(120deg,#ff5b8b,#c2185b);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:1.05rem;color:var(--sub);max-width:640px;margin:0}
+.glass{background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #ffffffb0;box-shadow:var(--shadow);border-radius:var(--radius)}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px;margin:18px 0}
+.metric{padding:8px;text-align:center}
+.metric b{display:block;font-size:1.3rem;letter-spacing:-.03em;color:var(--pink)}
+.metric span{color:var(--sub);font-size:.76rem}
+.section{padding-top:26px;scroll-margin-top:18px}
+.section-title{display:flex;justify-content:space-between;align-items:end;gap:14px;margin-bottom:12px}
+.section-title h2{font-size:1.65rem;letter-spacing:-.04em;margin:0}
+.section-title p{color:var(--sub);margin:0;font-size:.88rem}
+.panel{padding:20px;margin-bottom:14px}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:750;margin-right:6px}
+.badge.essential{background:#ffe1ea;color:#c2185b}
+.badge.recommended{background:#fff1e0;color:#b5691a}
+.badge.optional{background:#eef0ff;color:#4c53c9}
+.cycle-card{background:linear-gradient(135deg,#ff5b8b,#c2185b);color:#fff;padding:18px 20px}
+.cycle-card h3{margin:0 0 4px;font-size:1.2rem}
+.cycle-card p{margin:0;opacity:.92;font-size:.88rem}
+.cycle-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.cycle-row button{border:0;border-radius:14px;padding:11px 14px;font-weight:700;background:rgba(255,255,255,.22);color:#fff}
+.cycle-row button.solid{background:#fff;color:#c2185b}
+.readiness-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px}
+.readiness-grid .field label{font-size:.68rem}
+.recommend-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:14px;font-weight:750;margin-top:10px}
+.recommend-pill.green{background:#e8fbf1;color:#1f9c58}
+.recommend-pill.amber{background:#fff6e0;color:#a6740a}
+.recommend-pill.rose{background:#ffe4ec;color:#c2185b}
+.mode-tabs{display:flex;gap:8px;margin:10px 0}
+.mode-tab{flex:1;border:0;border-radius:16px;padding:10px 8px;background:#f6eef1;font-weight:700;color:var(--sub);font-size:.82rem}
+.mode-tab.active{background:var(--pink);color:#fff}
+.next-workout{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.next-workout h3{margin:0;font-size:1.3rem}
+.next-workout p{margin:3px 0 0;color:var(--sub);font-size:.85rem}
+.switch-btn{border:0;background:#f6eef1;border-radius:12px;padding:9px 13px;font-weight:700;color:var(--pink)}
+.workout-picker{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}
+.workout-picker::-webkit-scrollbar{display:none}
+.wk-chip{white-space:nowrap;border:0;border-radius:999px;padding:9px 14px;background:#f6eef1;font-weight:700;color:var(--sub);font-size:.85rem}
+.wk-chip.active{background:var(--pink);color:#fff}
+.progress-ring{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--pink) 0deg,#f3e3e9 0);font-weight:750;font-size:.75rem;position:relative}
+.progress-ring:after{content:"";position:absolute;inset:6px;background:white;border-radius:50%}
+.progress-ring span{position:relative;z-index:1;color:var(--pink)}
+.exercise{border-top:1px solid var(--line);padding:16px 0}
+.exercise:first-of-type{border-top:0}
+.ex-top{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:start}
+.check{appearance:none;width:29px;height:29px;border-radius:50%;border:2px solid #f0c7d4;margin:1px 0 0;background:white}
+.check:checked{background:var(--pink);border-color:var(--pink);box-shadow:inset 0 0 0 6px var(--pink)}
+.check:checked:after{content:"✓";display:block;color:white;text-align:center;line-height:24px;font-weight:900}
+.ex-name{font-weight:750;letter-spacing:-.01em}
+.ex-note{font-size:.8rem;color:var(--sub);margin-top:2px}
+.prescription{text-align:right;font-weight:750;color:var(--pink);font-size:.86rem;white-space:nowrap}
+.alt-row{margin:9px 0 0 42px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.alt-row select{border:1px solid #f0dde3;background:#fff8fa;border-radius:11px;padding:8px 9px;color:var(--text);outline:none;font-size:.85rem}
+.log-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0 0 42px}
+.log-row label{font-size:.66rem;color:var(--sub);font-weight:650}
+.log-row input{width:100%;display:block;margin-top:4px;border:1px solid #f0dde3;background:#fff8fa;border-radius:11px;padding:9px 8px;color:var(--text);outline:none}
+.log-row input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,91,139,.14)}
+.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.primary,.secondary,.danger{border:0;border-radius:14px;padding:12px 15px;font-weight:750}
+.primary{background:var(--pink);color:white}
+.secondary{background:#f6eef1;color:var(--text)}
+.danger{background:#fff0ef;color:var(--red)}
+.timer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.timer-display{font-variant-numeric:tabular-nums;font-size:2.3rem;font-weight:750;letter-spacing:-.04em;color:var(--pink)}
+.quick{display:flex;gap:7px;flex-wrap:wrap}
+.quick button{border:0;background:#f6eef1;border-radius:999px;padding:8px 11px;font-weight:650}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mini h3{margin:0 0 7px;font-size:1.03rem}
+.mini p,.mini li{color:var(--sub);font-size:.88rem}
+.mini ul{padding-left:19px;margin:8px 0}
+.pill{display:inline-block;padding:5px 10px;border-radius:999px;background:var(--rose);color:var(--pink);font-size:.74rem;font-weight:750;margin:2px}
+.pill.active{background:var(--pink);color:#fff}
+.rules{counter-reset:r;display:grid;gap:9px}
+.rule{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center}
+.rule:before{counter-increment:r;content:counter(r);width:28px;height:28px;border-radius:9px;background:var(--pink);color:white;display:grid;place-items:center;font-weight:750;font-size:.85rem}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.field label{display:block;color:var(--sub);font-size:.74rem;font-weight:650;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;border:1px solid #f0dde3;background:#fff8fa;border-radius:12px;padding:11px;outline:none;color:var(--text)}
+.field textarea{min-height:74px;resize:vertical}
+.span2{grid-column:span 2}.span4{grid-column:span 4}
+.status{font-size:.82rem;color:var(--green);min-height:18px;margin-top:8px}
+.warning{border-left:4px solid var(--amber);background:#fff8ea}
+.macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+.macro-box{background:var(--rose);border-radius:16px;padding:12px;text-align:center}
+.macro-box b{display:block;font-size:1.25rem;color:var(--pink)}
+.macro-box span{font-size:.7rem;color:var(--sub)}
+.footer{color:var(--sub);font-size:.78rem;text-align:center;padding:34px 20px}
+.bottom-nav{position:fixed;z-index:20;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:3px;padding:7px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);border:1px solid #ffe1ea;box-shadow:0 10px 30px rgba(255,91,139,.16);border-radius:20px}
+.bottom-nav a{text-decoration:none;color:var(--sub);font-size:.66rem;font-weight:750;padding:8px 11px;border-radius:14px;text-align:center}
+.bottom-nav a span{display:block;font-size:1.1rem}
+.bottom-nav a:hover{background:#fff0f4;color:var(--pink)}
+.filepick{border:1px dashed #f0b8c8;border-radius:14px;padding:12px;text-align:center;color:var(--sub);font-size:.85rem}
+@media(max-width:700px){
+  .summary{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .span4{grid-column:span 2}
+  .readiness-grid{grid-template-columns:repeat(2,1fr)}
+  .macro-grid{grid-template-columns:1fr 1fr}
+  .section-title{align-items:start;flex-direction:column}
+  .panel{padding:16px}
+  .log-row{margin-left:0}
+  .alt-row{margin-left:0}
+  .hero h1{font-size:2.6rem}
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#160c10;--card:rgba(38,20,26,.9);--text:#fbeef2;--sub:#caa7b1;--line:#3a2028;--shadow:none;--rose:#3a1520;}
+  body{background:radial-gradient(circle at 85% -5%,#3a1520 0,transparent 32%),radial-gradient(circle at -10% 20%,#241533 0,transparent 30%),#160c10}
+  .glass{border-color:#3a2028}
+  .mode-tab,.wk-chip,.secondary,.quick button,.switch-btn{background:#2a1620}
+  .progress-ring:after{background:#241318}
+  .check{background:#241318;border-color:#5b3140}
+  .log-row input,.field input,.field select,.field textarea{background:#241318;border-color:#4a2b34;color:#fbeef2}
+  .warning{background:#2e2410}
+  .bottom-nav{background:rgba(38,20,26,.92);border-color:#3a2028}
+  .danger{background:#331b1c}
+  .pill{background:#3a1520}
+  .macro-box{background:#2a1620}
+  .filepick{border-color:#5b3140}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero" id="home">
+<div class="eyebrow">8-week body recomposition · cycle-aware</div>
+<h1>Move with<br>your rhythm.</h1>
+<p>A flexible glute-and-core-focused training companion that adapts to your schedule, your energy, and your cycle.</p>
+</header>
+
+<section class="summary glass" aria-label="Profile summary">
+<div class="metric"><b>55 kg</b><span>Current weight</span></div>
+<div class="metric"><b>~18%</b><span>Estimated body fat</span></div>
+<div class="metric"><b>3–4×</b><span>Training weekly</span></div>
+<div class="metric"><b>Recomp</b><span>Same-weight goal</span></div>
+</section>
+
+<section class="section" id="cycle">
+<div class="section-title"><div><h2>Cycle & readiness</h2><p>Log how you feel today. Training adapts automatically.</p></div></div>
+<div class="glass panel cycle-card" id="cycleCard">
+  <h3 id="cycleHeadline">Cycle Day —</h3>
+  <p id="cycleSub">Log your period start to begin tracking.</p>
+  <div class="cycle-row">
+    <button class="solid" onclick="startPeriod()">Period started today</button>
+    <button onclick="openCycleHistory()">History</button>
+  </div>
+</div>
+<div class="glass panel" id="readinessPanel">
+  <h3 style="margin:0 0 4px">How do you feel today?</h3>
+  <p style="margin:0 0 8px;color:var(--sub);font-size:.85rem">Optional — takes 10 seconds, adjusts today's recommendation.</p>
+  <div class="readiness-grid">
+    <div class="field"><label>Energy</label><select id="rEnergy"><option value="">–</option><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
+    <div class="field"><label>Cramps</label><select id="rCramps"><option value="">–</option><option value="none">None</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select></div>
+    <div class="field"><label>Soreness</label><select id="rSoreness"><option value="">–</option><option>1</option><option>2</option><option>3</option><option selected>2</option><option>4</option><option>5</option></select></div>
+    <div class="field"><label>Sleep</label><select id="rSleep"><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>4</option></select></div>
+    <div class="field"><label>Motivation</label><select id="rMotivation"><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>4</option></select></div>
+  </div>
+  <div id="recommendOut"></div>
+  <div class="actions"><button class="primary" onclick="saveReadiness()">Update recommendation</button></div>
+</div>
+</section>
+
+<section class="section" id="today">
+<div class="section-title"><div><h2>Today's training</h2><p>Pick your workout, duration, and swap any exercise you like.</p></div></div>
+<div class="glass panel">
+  <div class="next-workout">
+    <div><div class="eyebrow" id="phaseLabel">Phase 1 · Adaptation</div><h3 id="nextWorkoutName">Lower A</h3><p id="nextWorkoutHint">Glutes & hamstrings</p></div>
+    <div class="progress-ring" id="ringToday"><span id="ringPct">0%</span></div>
+  </div>
+  <div class="workout-picker" id="workoutPicker"></div>
+  <div class="mode-tabs" id="modeTabs"></div>
+</div>
+<div class="glass panel" id="workoutPanel"></div>
+<div class="glass panel timer">
+  <div><div class="eyebrow">Rest timer</div><div class="timer-display" id="timerDisplay">01:30</div></div>
+  <div>
+    <div class="quick"><button onclick="setTimer(45)">0:45</button><button onclick="setTimer(60)">1:00</button><button onclick="setTimer(90)">1:30</button><button onclick="setTimer(120)">2:00</button></div>
+    <div class="actions"><button class="primary" id="timerToggle" onclick="toggleTimer()">Start</button><button class="secondary" onclick="resetTimer()">Reset</button></div>
+  </div>
+</div>
+</section>
+
+<section class="section" id="plan">
+<div class="section-title"><div><h2>How the plan flows</h2><p>Three required workouts rotate freely; phases advance as you complete them.</p></div></div>
+<div class="grid2">
+<div class="glass panel mini">
+<h3>Flexible rotation</h3>
+<p>Instead of fixed weekdays, train in this order whenever it suits your week:</p>
+<p><span class="pill active">1. Lower A</span><span class="pill active">2. Upper</span><span class="pill active">3. Lower B</span><span class="pill">Optional: anytime after Lower B</span></p>
+<p>Completing all three advances your training phase automatically. Skipping a day simply continues from the same point later.</p>
+</div>
+<div class="glass panel mini">
+<h3>Four-phase cycle</h3>
+<p><span class="pill">Phase 1 Adaptation</span><span class="pill">Phase 2 Progression</span><span class="pill">Phase 3 Productive</span><span class="pill">Phase 4 Recovery</span></p>
+<p>Three progressive phases are followed by one easier phase. A period start also triggers an easy recommendation immediately, regardless of phase.</p>
+</div>
+<div class="glass panel mini">
+<h3>Duration modes</h3>
+<ul><li><b>Express (40–50 min):</b> essential exercises only</li><li><b>Standard (60–75 min):</b> essential + recommended</li><li><b>Complete (75–90 min):</b> full session including optional work</li></ul>
+</div>
+<div class="glass panel mini">
+<h3>Exercise swaps</h3>
+<p>Every exercise has approved alternatives — pick whichever equipment is free or feels best. Bulgarian split squats, walking/reverse lunges and free-weight squats are intentionally excluded.</p>
+</div>
+</div>
+</section>
+
+<section class="section" id="nutrition">
+<div class="section-title"><div><h2>Nutrition target</h2><p>Same-weight recomposition — fuel training, not a deficit.</p></div></div>
+<div class="glass panel">
+<div class="macro-grid">
+<div class="macro-box"><b id="mCal">1950</b><span>kcal / day</span></div>
+<div class="macro-box"><b id="mPro">105g</b><span>Protein</span></div>
+<div class="macro-box"><b id="mFat">60g</b><span>Fat</span></div>
+<div class="macro-box"><b id="mCarb">245g</b><span>Carbohydrates</span></div>
+</div>
+<p style="margin-top:12px;color:var(--sub);font-size:.85rem">Ranges: 1,850–2,050 kcal · Protein 95–110g · Fat 55–65g · Carbohydrates 220–270g. Adjust only after two consecutive weeks of trend data, not a single day.</p>
+<div class="actions"><button class="secondary" onclick="toggleMacroEdit()">Adjust targets</button></div>
+<div id="macroEdit" style="display:none;margin-top:10px">
+  <div class="form-grid">
+    <div class="field"><label>Calories</label><input type="number" id="eCal" value="1950"></div>
+    <div class="field"><label>Protein (g)</label><input type="number" id="ePro" value="105"></div>
+    <div class="field"><label>Fat (g)</label><input type="number" id="eFat" value="60"></div>
+    <div class="field"><label>Carbs (g)</label><input type="number" id="eCarb" value="245"></div>
+  </div>
+  <div class="actions"><button class="primary" onclick="saveMacros()">Save targets</button></div>
+</div>
+</div>
+<div class="glass panel mini">
+<h3>Portion-based structure</h3>
+<ul>
+<li><b>Protein:</b> one palm-sized portion per main meal</li>
+<li><b>Carbohydrates:</b> one to two cupped-hand portions per main meal</li>
+<li><b>Vegetables or fruit:</b> one to two fist-sized portions</li>
+<li><b>Fat:</b> roughly one thumb-sized portion</li>
+<li>Add one protein + carbohydrate snack around training</li>
+</ul>
+</div>
+</section>
+
+<section class="section" id="guidance">
+<div class="section-title"><div><h2>Execution guide</h2><p>Simple rules that keep the plan safe and effective.</p></div></div>
+<div class="grid2">
+<div class="glass panel mini"><h3>RIR made simple</h3><ul><li><b>4 RIR:</b> ~4 clean reps remained</li><li><b>2 RIR:</b> ~2 remained</li><li><b>1 RIR:</b> ~1 remained</li><li><b>0 RIR:</b> failure — avoided by default</li></ul></div>
+<div class="glass panel mini"><h3>Progression</h3><p>Keep the same load until every set reaches the top of its range at the assigned RIR, then increase by the smallest available increment.</p></div>
+<div class="glass panel mini warning"><h3>Cramps or low energy</h3><p>Use the Easy recommendation, reduce load ~10–15%, or switch to Express mode. Walking and light cycling remain excellent low-impact options.</p></div>
+<div class="glass panel mini warning"><h3>When to seek care</h3><p>Severe or worsening pain, dizziness, unusually heavy bleeding, or symptoms that repeatedly prevent normal activity should be assessed by a healthcare professional.</p></div>
+</div>
+</section>
+
+<section class="section" id="progress">
+<div class="section-title"><div><h2>Weekly check-in</h2><p>Track trends, not single days.</p></div></div>
+<div class="glass panel">
+<div class="form-grid">
+<div class="field"><label>Date</label><input type="date" id="pDate"></div>
+<div class="field"><label>Weight (kg)</label><input type="number" step="0.1" id="pWeight" placeholder="55.0"></div>
+<div class="field"><label>Waist (cm)</label><input type="number" step="0.1" id="pWaist" placeholder="Optional"></div>
+<div class="field"><label>Hips (cm)</label><input type="number" step="0.1" id="pHips" placeholder="Optional"></div>
+<div class="field"><label>Steps avg</label><input type="number" id="pSteps" placeholder="7000"></div>
+<div class="field"><label>Sleep (h)</label><input type="number" step="0.1" id="pSleep" placeholder="8.5"></div>
+<div class="field"><label>Energy (1–5)</label><select id="pEnergy"><option>1</option><option>2</option><option selected>4</option><option>4</option><option>5</option></select></div>
+<div class="field"><label>Training quality (1–5)</label><select id="pTraining"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option></select></div>
+<div class="field span4"><label>Notes</label><textarea id="pNotes" placeholder="Strength, symptoms, mood, anything worth remembering..."></textarea></div>
+</div>
+<div class="actions"><button class="primary" onclick="saveCheckin()">Save check-in</button><button class="secondary" onclick="exportData()">Export backup</button><button class="danger" onclick="clearData()">Reset all</button></div>
+<div class="status" id="saveStatus"></div>
+<div id="history"></div>
+</div>
+<div class="glass panel">
+<h3 style="margin:0 0 6px">Restore from backup</h3>
+<p style="margin:0 0 10px;color:var(--sub);font-size:.85rem">Use this after reinstalling the app or switching phones.</p>
+<div class="filepick"><input type="file" id="restoreFile" accept="application/json" onchange="restoreData(this.files[0])"></div>
+</div>
+</section>
+
+<div class="glass panel mini warning"><h3>Safety note</h3><p>This is general fitness guidance, not medical treatment or a menstrual-health diagnostic tool. Stop training and seek qualified medical assessment for chest pain, dizziness, unusual shortness of breath, sharp pain, very heavy bleeding, or symptoms that persist or worsen.</p></div>
+<footer class="footer">Recomp Glow · Built for flexibility · Your data stays on this device unless exported.</footer>
+</div>
+
+<div id="errBanner" style="display:none;position:fixed;top:10px;left:10px;right:10px;z-index:50;background:#fff0ef;border:1px solid #ffb3ad;color:#8a1f16;padding:12px 14px;border-radius:14px;font-size:.85rem;box-shadow:0 6px 20px rgba(0,0,0,.12)"></div>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+<a href="#cycle"><span>◐</span>Cycle</a>
+<a href="#today"><span>●</span>Train</a>
+<a href="#plan"><span>▦</span>Plan</a>
+<a href="#nutrition"><span>◈</span>Food</a>
+<a href="#progress"><span>↗</span>Progress</a>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
